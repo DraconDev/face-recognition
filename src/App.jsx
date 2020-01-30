@@ -26,11 +26,24 @@ function App() {
   const [faceBox, setFaceBox] = useState({});
   const [route, setRoute] = useState("signin");
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [user, setUser] = useState({
+    id: "",
+    name: "",
+    email: "",
+    password: "",
+    entries: 0,
+    joined: ""
+  });
 
   // INPUT
   const onInputChange = event => {
     setInput(event.target.value);
     // console.log(input);
+  };
+
+  // Make user
+  const loadUser = data => {
+    setUser(data);
   };
 
   // CALCULATE FACE LOCATION
@@ -57,10 +70,16 @@ function App() {
     console.log(faceBox, boxData, "test");
   };
 
+  // useEffect(() => {
+  //   fetch("http://localhost:3000")
+  //     .then(response => response.json())
+  //     .then(console.log);
+  // }, []);
+
   // Route
   const onRouteChange = newRoute => {
     // setRoute(newRoute);
-    if (newRoute === "signout") {
+    if (newRoute === "signin") {
       setIsSignedIn(false);
     } else if (newRoute === "home") {
       setIsSignedIn(true);
@@ -69,7 +88,27 @@ function App() {
   };
 
   // USEEFFECT TEST
-  useEffect(() => {}, []);
+
+  // //SUBMIT API
+  // const onButtonSubmit = () => {
+  //   setImageUrl(input);
+  //   app.models
+  //     .predict(
+  //       Clarifai.FACE_DETECT_MODEL,
+  //       // "a403429f2ddf4b49b307e318f00e528b",
+  //       // "https://samples.clarifai.com/face-det.jpg"
+  //       input
+  //     )
+  //     .then(
+  //       function(response) {
+  //         displayFaceBox(calculateFaceLocation(response));
+  //       },
+  //       function(err) {
+  //         // there was an error
+  //       }
+  //     )
+  //     .catch(err => console.log(err));
+  // };
 
   //SUBMIT API
   const onButtonSubmit = () => {
@@ -89,32 +128,48 @@ function App() {
           // there was an error
         }
       )
+      .then(
+        // console.log({id: user.id}),
+        fetch("http://localhost:3000/image ", {
+          method: "put",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: user.id })
+          // body: { id: user.id }
+        })
+          .then(res => res.json())
+          .then(count =>
+            // console.log(count)
+            setUser(
+              { ...user, entries: count }
+              // )
+            )
+          )
+      )
       .catch(err => console.log(err));
   };
-  return (
-    console.log(route, "route"),
-    (
-      <div className="App">
-        <Particles className="particles" params={particleOptions} />
-        <Navigation isSignedIn={isSignedIn} onRouteChange={onRouteChange} />
 
-        {route === "home" ? (
-          <div>
-            <Logo />
-            <Rank />
-            <ImageLinkForm
-              onInputChange={onInputChange}
-              onButtonSubmit={onButtonSubmit}
-            />
-            <FaceRecognition imageUrl={imageUrl} faceBox={faceBox} />
-          </div>
-        ) : route === "signin" ? (
-          <SignIn onRouteChange={onRouteChange} />
-        ) : (
-          <Register onRouteChange={onRouteChange} />
-        )}
-      </div>
-    )
+  return (
+    // console.log(route, "route"),
+    <div className="App">
+      <Particles className="particles" params={particleOptions} />
+      <Navigation isSignedIn={isSignedIn} onRouteChange={onRouteChange} />
+
+      {route === "home" ? (
+        <div>
+          <Logo />
+          <Rank entries={user.entries} name={user.name} />
+          <ImageLinkForm
+            onInputChange={onInputChange}
+            onButtonSubmit={onButtonSubmit}
+          />
+          <FaceRecognition imageUrl={imageUrl} faceBox={faceBox} />
+        </div>
+      ) : route === "signin" ? (
+        <SignIn loadUser={loadUser} onRouteChange={onRouteChange} />
+      ) : (
+        <Register loadUser={loadUser} onRouteChange={onRouteChange} />
+      )}
+    </div>
   );
 }
 // <Rank/> <FaceRecognition/>
